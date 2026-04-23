@@ -1,0 +1,10 @@
+[package]
+name = "problem_generator"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.9"
+genpdf = { version = "0.2.0", features = ["hyphenation"] }
+hyphenation = { version = "0.8.4", features = ["embed_en-us"] }
+tokio = { version = "1.52.1", features = ["rt-multi-thread"] }
