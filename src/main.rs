@@ -1,6 +1,11 @@
-use genpdf::{elements::{self, Paragraph}, fonts::FontData, style};
+
+use std::str::FromStr;
+
+use genpdf::fonts::FontData;
 use hyphenation::{Load, Standard};
 
+mod util;
+use crate::util::{Question, build_document_base, build_response};
 
 use axum::{Router, extract::{Path, State}, http::{HeaderMap, header}, response::IntoResponse, routing::get};
 
@@ -22,39 +27,17 @@ async fn send_pdf(
         None => 1,
     };
 
-    // this block should be really moved somewhere in a function
-    let mut doc = genpdf::Document::new(state.font_family);
-    doc.set_title("Test document title");
-    let mut decorator = genpdf::SimplePageDecorator::new();
-    decorator.set_margins(10);
-    doc.set_page_decorator(decorator);
-    let mut title = Paragraph::default();
-    title.push_styled("title", style::Effect::Bold);
-    title.set_alignment(genpdf::Alignment::Center);
-    doc.push(title);
-
-
-
-    doc.push(elements::Break::new(5));
-    doc.set_hyphenator(state.hyphenator);
+    let mut doc = build_document_base(state);
 
     for i in 0..len  {
         doc.push(
             genpdf::elements::Paragraph::new(
                 format!("this is line {}", i)
             ));
-
-
     }
 
-    let mut headers = HeaderMap::new();
-    headers.insert(header::CONTENT_TYPE, "application/pdf".parse().unwrap());
 
-
-
-    let mut w: Vec<u8> = vec![];
-    let _ = doc.render(&mut w).expect("error during pdf rendering");
-    (headers,w.clone())
+    build_response(doc)
 }
 
 
@@ -82,5 +65,21 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener,routes).await.unwrap();
 
+
+}
+
+
+
+
+#[test]
+fn test_string_to_question_parse() {
+    let test_question = Question {subject:util::Subject::Math,theme:util::Theme::Math(util::MathTheme::ParametricEquations),text: "\n\n{{}} + y = 12".to_string()};
+    let test_string: &str = "Math
+ParametricEquations
+
+
+{{}} + y = 12";
+
+    assert_eq!(Question::from_str(test_string).unwrap(),test_question);
 
 }
