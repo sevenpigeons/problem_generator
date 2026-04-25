@@ -19,17 +19,21 @@ Multivariable Calculus by Stewart.
 ## Goals
 - [ ] Create handler function to extract problem request parameters
 - [ ] Write a question bank by chapter (separate text files)
-- [ ] Write question parser, with number generator for questions ( variables encoded in question text with `{{ }}` potentially?)
+- [x] Write question text parser, 
+- [ ] Write a number generator for questions ( variables encoded in question text with `{{ }}` potentially?)
 - [ ] Port axum to run on [shuttle.dev](https://www.shuttle.dev/)
 - [ ] Write a front-end page with a basic form that would open a new tab with the pdf requested on [my website](https://tangled.org/sevenpigeons.ca/sevenpigeons.ca)
 
 ## Fonts
 
-I am not sure about distributing Roboto font for now, please add 
+~I am not sure about distributing Roboto font for now, please add~
+I read the license yes I can, the Roboto font is under the Open Font License.
+
+In the `fonts` folder, please find the following ttf files:
 
 - `Roboto-Bold.ttf`
 - `Roboto-BoldItalic.ttf`
 - `Roboto-Italic.ttf`
 - `Roboto-Regular.ttf`
 
-in the `fonts` folder, you get get it from [google fonts](fonts.google.com/specimen/Roboto)
+If you wish to change the font, you will have to provide `Bold, BoldItalic, Italic`,and `Regular` ttf files of the font you'd like to use.
