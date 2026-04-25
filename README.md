@@ -24,6 +24,12 @@ Multivariable Calculus by Stewart.
 - [ ] Port axum to run on [shuttle.dev](https://www.shuttle.dev/)
 - [ ] Write a front-end page with a basic form that would open a new tab with the pdf requested on [my website](https://tangled.org/sevenpigeons.ca/sevenpigeons.ca)
 
+## Questions 
+
+Questions are represented by a `struct` with it's subject, theme, and the text of the question.
+
+To parse from string (and text file), first line is the Subject, second Theme, and everything afterwards the text of the question.
+
 ## Fonts
 
 ~I am not sure about distributing Roboto font for now, please add~

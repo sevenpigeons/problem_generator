@@ -7,6 +7,7 @@ edition = "2024"
 axum = "0.8.9"
 genpdf = { version = "0.2.0", features = ["hyphenation"] }
 hyphenation = { version = "0.8.4", features = ["embed_en-us"] }
+rand = "0.10.1"
 strum = "0.28.0"
 strum_macros = "0.28.0"
 tokio = { version = "1.52.1", features = ["rt-multi-thread"] }
