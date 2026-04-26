@@ -1,7 +1,6 @@
 
-use std::str::FromStr;
-
 use axum::{http::{HeaderMap, header}, response::IntoResponse};
+use dyn_fmt::AsStrFormatExt;
 use genpdf::{Document, elements::{self, Paragraph}, style};
 use rand::random_range;
 use crate::GenpdfState;
@@ -36,13 +35,14 @@ pub enum MathTheme {
 
 }
 
-#[derive(Debug,PartialEq)]
-pub struct Question {
+pub struct Question<F>
+    where F: Fn(&[f32])-> f32
+    {
     pub subject: Subject,
     pub theme: Theme,
-    pub text: String,
-    pub var_conditions: Vec<(i32,i32)>,
-    pub ans_expression: Option<String>
+    pub text: &'static str,
+    pub var_conditions: &'static [(i32,i32)],
+    pub ans_expression: F
 }
 
 #[derive(Debug,Display)]
@@ -51,59 +51,19 @@ pub enum QuestionParseError {
     Strum(strum::ParseError)
 }
 
-impl FromStr for Question {
-    type Err = QuestionParseError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let l : Vec<&str> = s.splitn(5, ";\n").collect();
-        let subj: Subject = Subject::from_str(l[0]).unwrap();
-        let theme: Theme = match subj {
-            Subject::Math => Theme::Math( match MathTheme::from_str(l[1]) {
-                Ok(t) => t,
-                Err(err) => panic!("{err}: string {0}",l[1])
-            }),
-            Subject::Physics => Theme::Physics(PhysTheme::from_str(l[1]).unwrap()),
-        };
-        if l[2].is_empty() {
-            return Err(QuestionParseError::QuestionFileParseError);
-        }
-        let var_amount = l[2].to_string().matches("{{").collect::<Vec<_>>().len();
-        if l[3].is_empty() {
-            return Err(QuestionParseError::QuestionFileParseError);
-        }
-        let lines = l[3].lines().collect::<Vec<_>>();
-        if !(lines.len() == var_amount) {
-            return Err(QuestionParseError::QuestionFileParseError);
-        }
 
-        let var_conf:Vec<(i32,i32)> = lines.iter().map(|x| {
-            let elements:Vec<_> = x.split(",").collect();
-            (elements[0].parse().unwrap(),elements[1].parse().unwrap())
-        }
-        ).collect();
-
-        if l.len() < 4 {
-            Ok(Question { subject: subj, theme: theme, text: l[2].to_string(),var_conditions:var_conf ,ans_expression: Some(l[4].to_string()) })
-        } else {
-            Ok(Question { subject: subj, theme: theme, text: l[2].to_string(),var_conditions:var_conf ,ans_expression: None })
-        }
-    }
-
-}
-
-
-impl Question {
-    pub fn generate_question(&self) -> String {
-        let  text = self.text.split_whitespace().map(|x| {
-            if x.contains("{{") {
-                if x[0..2] == *"{{" && x[3..5] == *"}}" {
-                    let var_num:usize = x.chars().nth(2).unwrap().to_string().parse().unwrap();
-                    return format!("{}",random_range(self.var_conditions[var_num].0..self.var_conditions[var_num].1)).to_string();
-                }
-            }
-            x.to_string()
+impl<F> Question<F> 
+    where F: Fn(&[f32])-> f32
+{
+    pub fn generate_question(&self) -> (String,String) {
+        let vars:Vec<i32> = self.var_conditions.iter().map(|x| {
+            random_range(x.0..x.1)
         }).collect();
+        let text = self.text.format(&vars[..]);
 
-        text
+        let answer = (self.ans_expression)(vars.iter().map(|x| *x as f32).collect::<Vec<f32>>().iter().as_slice());
+
+        (text.to_string(),format!("{}",answer))
     }
 
 }

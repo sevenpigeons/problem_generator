@@ -1,13 +1,13 @@
 
-use std::str::FromStr;
-
 use genpdf::fonts::FontData;
 use hyphenation::{Load, Standard};
 
 mod util;
-use crate::util::{Question, build_document_base, build_response};
+use crate::util::{build_document_base, build_response};
 
-use axum::{Router, extract::{Path, State}, http::{HeaderMap, header}, response::IntoResponse, routing::get};
+mod problems;
+
+use axum::{Router, extract::{Path, State}, response::IntoResponse, routing::get};
 
 #[derive(Clone)]
 pub struct GenpdfState {
@@ -21,6 +21,7 @@ async fn send_pdf(
     key: Option<Path<i32>>)
 -> impl IntoResponse {
 
+    let nelem_p = problems::nelem::build_nelem();
 
     let len = match key {
         Some(Path(a)) => a,
@@ -29,33 +30,22 @@ async fn send_pdf(
 
     let mut doc = build_document_base(state);
 
-    let test_string: &str = "Math;
-PartialDerivatives;
-
-f(x,y) = x^ {{0}} + x^ {{1}} *y^ {{2}} - {{3}} *y^ {{4}}
-
-f_x( {{5}} , {{6}} ) = ?
-
-f_y( {{7}} , {{8}} ) = ?;
-1,5
-2,5
-2,5
-1,5
-1,5
-1,33
-2,44
-1,33
-2,44";
-
-    let q = Question::from_str(test_string).unwrap();
-
     for i in 0..len  {
+
+        doc.push(genpdf::elements::Text::new(format!("question {i}"))) ;
+        let (text,answer) = nelem_p.generate_question();
+        for l in  text.lines() {
         doc.push(
-            genpdf::elements::Paragraph::new(
-              //  format!("this is line {}", i)
-                q.generate_question()
-            ));
-    }
+            genpdf::elements::Text::new(
+                    l
+                ));
+        }
+
+        doc.push(genpdf::elements::Text::new("Answer:"));
+        doc.push(genpdf::elements::Text::new(answer));
+        doc.push(genpdf::elements::Text::new(""));
+
+    };
 
 
     build_response(doc)
@@ -92,23 +82,23 @@ async fn main() {
 
 
 
-#[test]
-fn test_string_to_question_parse() {
-    let test_question = Question {
-        subject:util::Subject::Math,
-        theme:util::Theme::Math(util::MathTheme::ParametricEquations),
-        text: "\n\n{{0}} + y = 12".to_string(),
-        var_conditions:vec![(1,4)],
-        ans_expression: None};
-    let test_string: &str = "Math;
-ParametricEquations;
-
-
-{{0}} + y = 12;
-1,4";
-
- let text = Question::from_str(test_string).unwrap().generate_question();
-    println!("{}\n",text);
-    assert_eq!(Question::from_str(test_string).unwrap(),test_question);
-
-}
+//#[test]
+//fn test_string_to_question_parse() {
+//    let test_question = Question {
+//        subject:util::Subject::Math,
+//        theme:util::Theme::Math(util::MathTheme::ParametricEquations),
+//        text: "\n\n{{0}} + y = 12".to_string(),
+//        var_conditions:vec![(1,4)],
+//        ans_expression: None};
+//    let test_string: &str = "Math;
+//ParametricEquations;
+//
+//
+//{{0}} + y = 12;
+//1,4";
+//
+// let text = Question::from_str(test_string).unwrap().generate_question();
+//    println!("{}\n",text);
+//    assert_eq!(Question::from_str(test_string).unwrap(),test_question);
+//
+//}
